@@ -29,10 +29,10 @@
           '<section class="card" aria-labelledby="cvh-h"><div class="card-head"><div><h2 id="cvh-h">History</h2><p class="card-sub">Last ' + MAX_HISTORY + " conversions, saved locally.</p></div><button class=\"btn btn-sm btn-ghost\" type=\"button\" id=\"cvh-clear\">Clear history</button></div><div id=\"cvh\"></div></section>" +
           '<section class="card" aria-labelledby="cvs-h"><div class="card-head"><div><h2 id="cvs-h">Supported formats</h2><p class="card-sub">Agent URL patterns checked on 15 Nov 2026.</p></div></div>' +
             '<div class="table-wrap"><table><thead><tr><th scope="col">Agent</th><th scope="col">Convert to</th><th scope="col">Platforms</th></tr></thead><tbody>' +
-              Object.keys(A).map(function (k) { return "<tr><td>" + A[k].name + "</td><td>Yes</td><td>" + (A[k].platforms.length === 1 ? "Weidian only" : "Weidian, Taobao, Tmall, 1688") + "</td></tr>"; }).join("") +
-              Object.keys(RV.links.READ_ONLY).map(function (k) { return "<tr><td>" + RV.esc(RV.links.READ_ONLY[k]) + '</td><td class="muted">Read only</td><td class="muted">Unwraps to original</td></tr>'; }).join("") +
+              Object.keys(A).map(function (k) { return "<tr><td>" + A[k].name + "</td><td>Yes</td><td>" + (A[k].platforms.length === 1 ? "Weidian" : "All 4") + "</td></tr>"; }).join("") +
+              Object.keys(RV.links.READ_ONLY).map(function (k) { return "<tr><td>" + RV.esc(RV.links.READ_ONLY[k]) + '</td><td class="muted">Read only</td><td class="muted">Unwrap</td></tr>'; }).join("") +
             "</tbody></table></div>" +
-            '<p class="hint" style="margin-top:10px">Short links (m.tb.cn, bit.ly), shop pages and Yupoo albums don’t contain an item number. Open them first and paste the full product address.</p>' +
+            '<p class="hint" style="margin-top:10px">“All 4” = Weidian, Taobao, Tmall and 1688. Short links (m.tb.cn, bit.ly), shop pages and Yupoo albums don’t contain an item number. Open them first and paste the full product address.</p>' +
           "</section>" +
         "</div>";
 
