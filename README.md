@@ -27,11 +27,13 @@ No other network calls are made. Carrier tracking and QC photos open on the offi
 | --- | --- | --- |
 | KakoBuy | `kakobuy.com/item/details?url=<encoded original>` | Live kakobuy.com page indexed with this URL; HTTP 200; multiple converter docs |
 | Superbuy | `superbuy.com/en/page/buy/?nTag=Home-search&from=search-input&_search=url&position=&url=<encoded>` | Live superbuy.com URL in search index |
-| Sugargoo | `sugargoo.com/#/home/productDetail?productLink=<encoded>` | Posted by Sugargoo staff on r/Sugargoo |
+| Sugargoo | `sugargoo.com/products?productLink=<encoded>` | Route in Sugargoo's live JS bundle (`/productDetail` redirects to `/products`); old `#/home/productDetail` links still unwrap |
 | OopBuy | `oopbuy.com/product/<id>` (Taobao), `/product/weidian/<id>`, `/product/1688/<id>` | Converter docs; HTTP 200 |
 | CSSBuy | `cssbuy.com/item-<id>.html` (Taobao), `item-micro-<id>` (Weidian), `item-1688-<id>` | rep.tools + GRAILS docs; HTTP 200 |
 | USFans | `usfans.com/product/<3 Weidian, 2 Taobao, 1 1688>/<id>` | Two independent converter docs; HTTP 200 |
-| ACBuy | `acbuy.com/product?id=<id>&source=WD` (**Weidian only**) | Many Reddit posts pairing ACBuy and Weidian links |
+| ACBuy | `acbuy.com/product?id=<id>&source=WD` (Weidian), `TB` (Taobao/Tmall), `AL` (1688) | repbuytools.com + taofind.com docs, Apify agent-link output, many Reddit WD examples |
+
+Tmall: OopBuy, CSSBuy, USFans and ACBuy have no separate Tmall code, so Tmall items are built with the Taobao code (same ID) and the app shows a note; KakoBuy, Superbuy and Sugargoo keep the full Tmall URL.
 
 Read-only (unwrapped to the original, not generated): CNFans and AllChinaBuy (closed/maintenance since Aug 2026), Mulebuy and Hoobuy (unreachable), Joyagoo (conflicting formats).
 

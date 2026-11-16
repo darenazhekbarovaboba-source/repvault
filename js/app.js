@@ -55,6 +55,7 @@
     if (!tool) {
       current = null;
       document.title = "Not found · REPVAULT";
+      announce("Page not found");
       view.innerHTML = '<section class="notfound"><p class="big-num">404</p><h1>This page isn’t in the vault</h1><p class="lede" style="margin:12px auto 24px">The link may be mistyped or the page was moved.</p><a class="btn btn-primary" href="#/dashboard">' + RV.icon("dashboard") + "Back to dashboard</a></section>";
       return;
     }
@@ -68,7 +69,37 @@
     }
     RV.trackRecent(r.route);
     window.scrollTo(0, 0);
+    announce(tool.title);
   }
+  var announcer = document.getElementById("route-announcer");
+  function announce(text) {
+    announcer.textContent = "";
+    setTimeout(function () { announcer.textContent = text + " page"; }, 60);
+  }
+
+  // Mark horizontally scrollable tables with a visible cue.
+  var markTimer = null;
+  function markScroll() {
+    clearTimeout(markTimer);
+    markTimer = setTimeout(function () {
+      RV.$$(".table-wrap", view).forEach(function (w) {
+        var over = w.scrollWidth > w.clientWidth + 1;
+        w.classList.toggle("has-overflow", over);
+        if (over) { w.setAttribute("tabindex", "0"); w.setAttribute("role", "region"); w.setAttribute("aria-label", "Scrollable table"); }
+        var hint = w.previousElementSibling;
+        if (!hint || !hint.classList.contains("scroll-hint")) {
+          hint = document.createElement("p"); hint.className = "scroll-hint"; hint.setAttribute("aria-hidden", "true"); hint.textContent = "Swipe or scroll sideways for more columns →";
+          w.parentNode.insertBefore(hint, w);
+        }
+        hint.classList.toggle("show", over);
+      });
+    }, 60);
+  }
+  RV.markScroll = markScroll;
+  new MutationObserver(function (muts) {
+    if (muts.some(function (m) { return !(m.target.classList && m.target.classList.contains("scroll-hint")); })) markScroll();
+  }).observe(view, { childList: true, subtree: true });
+  window.addEventListener("resize", markScroll);
   RV.rerender = render;
 
   function renderFxChip() {

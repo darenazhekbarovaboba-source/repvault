@@ -11,6 +11,8 @@
     "1688": { name: "1688", url: function (id) { return "https://detail.1688.com/offer/" + id + ".html"; } }
   };
 
+  var ACBUY_CODES = { weidian: "WD", taobao: "TB", tmall: "TB", "1688": "AL" };
+
   // Agents RepVault can generate links for (formats verified).
   var AGENTS = {
     kakobuy: {
@@ -23,32 +25,34 @@
     },
     sugargoo: {
       name: "Sugargoo", platforms: ["weidian", "taobao", "tmall", "1688"],
-      build: function (p) { return "https://www.sugargoo.com/#/home/productDetail?productLink=" + encodeURIComponent(p.original); }
+      // Current SPA route (live bundle, 15 Nov 2026): /products?productLink=<encoded original>. Old #/home/productDetail links still unwrap.
+      build: function (p) { return "https://www.sugargoo.com/products?productLink=" + encodeURIComponent(p.original); }
     },
     oopbuy: {
-      name: "OopBuy", platforms: ["weidian", "taobao", "tmall", "1688"],
+      name: "OopBuy", platforms: ["weidian", "taobao", "tmall", "1688"], tmallAsTaobao: true,
       build: function (p) {
         var seg = p.platform === "weidian" ? "weidian/" : p.platform === "1688" ? "1688/" : "";
         return "https://oopbuy.com/product/" + seg + p.id;
       }
     },
     cssbuy: {
-      name: "CSSBuy", platforms: ["weidian", "taobao", "tmall", "1688"],
+      name: "CSSBuy", platforms: ["weidian", "taobao", "tmall", "1688"], tmallAsTaobao: true,
       build: function (p) {
         var seg = p.platform === "weidian" ? "item-micro-" : p.platform === "1688" ? "item-1688-" : "item-";
         return "https://www.cssbuy.com/" + seg + p.id + ".html";
       }
     },
     usfans: {
-      name: "USFans", platforms: ["weidian", "taobao", "tmall", "1688"],
+      name: "USFans", platforms: ["weidian", "taobao", "tmall", "1688"], tmallAsTaobao: true,
       build: function (p) {
         var code = p.platform === "weidian" ? 3 : p.platform === "1688" ? 1 : 2;
         return "https://www.usfans.com/product/" + code + "/" + p.id;
       }
     },
     acbuy: {
-      name: "ACBuy", platforms: ["weidian"],
-      build: function (p) { return "https://www.acbuy.com/product?id=" + p.id + "&source=WD"; }
+      // source flag: WD = Weidian, TB = Taobao/Tmall, AL = 1688 (verified 15 Nov 2026)
+      name: "ACBuy", platforms: ["weidian", "taobao", "tmall", "1688"], tmallAsTaobao: true,
+      build: function (p) { return "https://www.acbuy.com/product?id=" + p.id + "&source=" + ACBUY_CODES[p.platform]; }
     }
   };
 
@@ -108,7 +112,7 @@
       return result("taobao", tid);
     }
     if (/(^|\.)1688\.com$/.test(h)) {
-      var om = path.match(/offer\/(\d+)\.html/);
+      var om = path.match(/offer\/(\d+)(?:\.html)?(?:[/?#]|$)/);
       return result("1688", om ? om[1] : p.offerid);
     }
     return null;
@@ -139,7 +143,8 @@
     if (agentKey === "usfans" && (m = path.match(/\/product\/([123])\/(\d+)/))) return result({ 1: "1688", 2: "taobao", 3: "weidian" }[m[1]], m[2], via);
     if (agentKey === "acbuy" && p.id) {
       var src = String(p.source || "").toUpperCase();
-      if (src === "WD") return result("weidian", p.id, via);
+      var acMap = { WD: "weidian", TB: "taobao", AL: "1688" };
+      if (acMap[src]) return result(acMap[src], p.id, via);
     }
     // 3) id + platform word (CNFans, Mulebuy, Joyagoo, LoveGoBuy and similar)
     var pw = platformWord(p.shop_type || p.platform || p.shoptype || p.channel || p.source);
@@ -182,10 +187,12 @@
   RV.links = {
     PLATFORMS: PLATFORMS, AGENTS: AGENTS, READ_ONLY: READ_ONLY,
     parse: parse, explain: explain, toAgent: toAgent, platformOf: platformOf,
+    losesTmall: function (parsed, agentKey) { return !!(parsed && parsed.platform === "tmall" && AGENTS[agentKey] && AGENTS[agentKey].tmallAsTaobao); },
+    TMALL_NOTE: "This agent's link format has no separate Tmall code, so it is built with the Taobao code. The item ID is the same; converting it back gives a Taobao-format link. Keep the original Tmall link shown here.",
     qcFinder: function (parsed) { return "https://rep.tools/qc-finder?link=" + encodeURIComponent(parsed.original); },
     agentOptions: function (selected) {
       return Object.keys(AGENTS).map(function (k) {
-        return '<option value="' + k + '"' + (k === selected ? " selected" : "") + ">" + RV.esc(AGENTS[k].name) + (AGENTS[k].platforms.length === 1 ? " (Weidian only)" : "") + "</option>";
+        return '<option value="' + k + '"' + (k === selected ? " selected" : "") + ">" + RV.esc(AGENTS[k].name) + (AGENTS[k].platforms.length < 4 ? " (" + AGENTS[k].platforms.map(function (x) { return PLATFORMS[x].name; }).join(", ") + " only)" : "") + "</option>";
       }).join("");
     }
   };

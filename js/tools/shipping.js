@@ -132,7 +132,7 @@
             "<dt>Typical transit</dt><dd>" + RV.esc(q.line.days || "—") + " days</dd></dl>" +
           '<p class="hint">Estimate only. Real costs depend on your agent, item type, battery/brand checks and remote-area fees.</p></div>';
         var sorted = all.slice().sort(function (a, b) { return a.over - b.over || a.total - b.total; });
-        cmp.innerHTML = '<div class="table-wrap"><table><thead><tr><th scope="col">Line</th><th scope="col">Billed</th><th scope="col">Estimate (CNY)</th><th scope="col">≈ ' + cur + '</th><th scope="col">Days</th><th scope="col">Note</th></tr></thead><tbody>' +
+        cmp.innerHTML = '<div class="table-wrap"><table class="compact"><thead><tr><th scope="col">Line</th><th scope="col">Billed</th><th scope="col">Estimate (CNY)</th><th scope="col">≈ ' + cur + '</th><th scope="col">Days</th><th scope="col">Note</th></tr></thead><tbody>' +
           sorted.map(function (x, i) {
             var c = RV.fx.convert(x.total, cur);
             return "<tr" + (x.line.id === q.line.id ? ' class="is-hit"' : "") + "><td>" + RV.esc(x.line.name) + '</td><td class="num">' + x.billed + ' kg</td><td class="num">' + RV.fx.cny(x.total) + '</td><td class="num">' + (c != null ? RV.esc(RV.fx.format(c, cur)) : "—") + "</td><td>" + RV.esc(x.line.days || "—") + "</td><td>" + (x.over ? "Over " + x.line.max + " kg" : i === 0 ? "Cheapest" : "") + "</td></tr>";

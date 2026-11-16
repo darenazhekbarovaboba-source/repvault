@@ -28,8 +28,8 @@
         '<div class="split" style="margin-top:18px">' +
           '<section class="card" aria-labelledby="cvh-h"><div class="card-head"><div><h2 id="cvh-h">History</h2><p class="card-sub">Last ' + MAX_HISTORY + " conversions, saved locally.</p></div><button class=\"btn btn-sm btn-ghost\" type=\"button\" id=\"cvh-clear\">Clear history</button></div><div id=\"cvh\"></div></section>" +
           '<section class="card" aria-labelledby="cvs-h"><div class="card-head"><div><h2 id="cvs-h">Supported formats</h2><p class="card-sub">Agent URL patterns checked on 15 Nov 2026.</p></div></div>' +
-            '<div class="table-wrap"><table><thead><tr><th scope="col">Agent</th><th scope="col">Convert to</th><th scope="col">Platforms</th></tr></thead><tbody>' +
-              Object.keys(A).map(function (k) { return "<tr><td>" + A[k].name + "</td><td>Yes</td><td>" + (A[k].platforms.length === 1 ? "Weidian" : "All 4") + "</td></tr>"; }).join("") +
+            '<div class="table-wrap"><table class="wrap-cells"><thead><tr><th scope="col">Agent</th><th scope="col">Convert to</th><th scope="col">Platforms</th></tr></thead><tbody>' +
+              Object.keys(A).map(function (k) { return "<tr><td>" + A[k].name + "</td><td>Yes</td><td>" + (A[k].platforms.length === 4 ? "All 4" + (A[k].tmallAsTaobao ? " (Tmall via Taobao code)" : "") : A[k].platforms.map(function (x) { return RV.links.PLATFORMS[x].name; }).join(", ")) + "</td></tr>"; }).join("") +
               Object.keys(RV.links.READ_ONLY).map(function (k) { return "<tr><td>" + RV.esc(RV.links.READ_ONLY[k]) + '</td><td class="muted">Read only</td><td class="muted">Unwrap</td></tr>'; }).join("") +
             "</tbody></table></div>" +
             '<p class="hint" style="margin-top:10px">“All 4” = Weidian, Taobao, Tmall and 1688. Short links (m.tb.cn, bit.ly), shop pages and Yupoo albums don’t contain an item number. Open them first and paste the full product address.</p>' +
@@ -54,8 +54,8 @@
         if (!p) return { input: link, error: RV.links.explain(link) };
         if (target === "original") return { input: link, parsed: p, output: p.original };
         var url = RV.links.toAgent(p, target);
-        if (!url) return { input: link, parsed: p, error: A[target].name + " links are verified for Weidian items only. Original: " + p.original };
-        return { input: link, parsed: p, output: url };
+        if (!url) return { input: link, parsed: p, error: A[target].name + " links can't be built for " + p.platformName + " items (format not verified). Original: " + p.original };
+        return { input: link, parsed: p, output: url, tmall: RV.links.losesTmall(p, target) };
       }
       function targetName(t) { return t === "original" ? "Original" : A[t].name; }
       function addHistory(r, target) {
@@ -81,6 +81,7 @@
           out.innerHTML = '<div class="result">' +
             '<dl class="kv"><dt>Detected</dt><dd>' + RV.esc(r.parsed.platformName) + ' item <span class="mono">' + RV.esc(r.parsed.id) + "</span>" + (r.parsed.via ? " · from " + RV.esc(r.parsed.via) : "") + "</dd><dt>Result</dt><dd>" + RV.esc(targetName(target)) + "</dd></dl>" +
             (r.output ? outLine(r) : '<div class="notice notice-error">' + RV.icon("alert") + "<div>" + RV.esc(r.error) + "</div></div>") +
+            (r.tmall ? '<div class="notice" id="cv-tmall-note">' + RV.icon("info") + "<div>" + RV.esc(RV.links.TMALL_NOTE) + "</div></div>" : "") +
             (target !== "original" ? '<div class="out-line"><span class="mono">' + RV.esc(r.parsed.original) + '</span><span class="actions"><button class="btn btn-sm" type="button" data-copy="' + RV.esc(r.parsed.original) + '">' + RV.icon("copy") + "Copy original</button></span></div>" : "") +
             '<details><summary class="small muted" style="cursor:pointer">Same item on other agents (' + others.length + ")</summary><div class=\"chip-list\" style=\"margin-top:10px\">" +
               others.map(function (x) { return '<a class="chip" href="' + RV.esc(x.url) + '" target="_blank" rel="noopener">' + RV.icon("external") + RV.esc(A[x.k].name) + "</a>"; }).join("") + "</div></details>" +
@@ -97,7 +98,7 @@
           var allOut = res.map(function (r) { return r.output || ""; }).join("\n");
           out.innerHTML = '<div class="result"><div class="row"><span class="strong">' + okCount + " of " + res.length + " converted</span>" + (okCount < res.length ? '<span class="badge badge-dashed">' + (res.length - okCount) + " failed</span>" : "") + '<span class="spacer"></span><button class="btn btn-sm btn-primary" type="button" id="cv-copy-all">' + RV.icon("copy") + "Copy all</button></div>" +
             '<ol class="stack" style="margin:0;padding-left:20px">' + res.map(function (r) {
-              return '<li style="min-width:0">' + (r.output ? outLine(r) : '<div class="out-line"><span class="small"><span class="mono">' + RV.esc(r.input) + "</span><br>" + RV.esc(r.error) + "</span></div>") + "</li>";
+              return '<li style="min-width:0">' + (r.tmall ? '<p class="hint" style="margin-bottom:4px">Tmall item: built with the Taobao code (same ID).</p>' : "") + (r.output ? outLine(r) : '<div class="out-line"><span class="small"><span class="mono">' + RV.esc(r.input) + "</span><br>" + RV.esc(r.error) + "</span></div>") + "</li>";
             }).join("") + "</ol><p class=\"hint\">Copy all keeps line order; failed lines are left blank.</p></div>";
           RV.$("#cv-copy-all", out).addEventListener("click", function () { RV.copy(allOut, okCount + " links copied"); });
           res.filter(function (r) { return r.output; }).slice(0, 10).forEach(function (r) { addHistory(r, target); });

@@ -63,7 +63,7 @@
               '<details style="margin-top:14px"><summary class="small muted" style="cursor:pointer">Full shoe chart</summary><div class="table-wrap" style="margin-top:10px"><table id="sh-table"><thead><tr>' + Object.keys(SHOE_COLS).map(function (k) { return '<th scope="col">' + SHOE_COLS[k] + "</th>"; }).join("") + "</tr></thead><tbody></tbody></table></div></details>" +
             "</section>" +
             '<section class="card" aria-labelledby="cl-h"><div class="card-head"><div><h2 id="cl-h">Clothing charts</h2><p class="card-sub">Body measurements in ' + '<span id="cl-unit"></span>' + ".</p></div><div class=\"seg\" role=\"tablist\" aria-label=\"Chart type\"><button type=\"button\" role=\"tab\" data-tab=\"tops\" aria-selected=\"true\">Tops</button><button type=\"button\" role=\"tab\" data-tab=\"bottoms\" aria-selected=\"false\">Bottoms</button></div></div>" +
-              '<div class="table-wrap"><table id="cl-table"></table></div>' +
+              '<div class="table-wrap"><table id="cl-table" class="compact"></table></div>' +
               '<div class="notice" style="margin-top:14px">' + RV.icon("info") + "<div><strong>Chinese sizes usually run 1–2 sizes small.</strong> A US M is often an L or XL on Taobao/Weidian. Always compare against the seller’s own chart of garment measurements (in cm) before ordering.</div></div>" +
             "</section>" +
           "</div>" +
@@ -79,7 +79,14 @@
       var hitIndex = 7;
       function fillVals() {
         var k = sys.value;
-        val.innerHTML = SHOES.map(function (r, i) { return '<option value="' + i + '"' + (i === hitIndex ? " selected" : "") + ">" + fmt(shoeRow(r)[k]) + "</option>"; }).join("");
+        var counts = {};
+        SHOES.forEach(function (r) { var v = shoeRow(r)[k]; counts[v] = (counts[v] || 0) + 1; });
+        val.innerHTML = SHOES.map(function (r, i) {
+          var row = shoeRow(r), v = row[k];
+          var label = fmt(v) + (counts[v] > 1 ? (k === "usm" ? "" : " (US M " + fmt(row.usm) + ")") : "");
+          if (counts[v] > 1 && k === "usm") label += " (EU " + row.eu + ")";
+          return '<option value="' + i + '"' + (i === hitIndex ? " selected" : "") + ">" + label + "</option>";
+        }).join("");
         paintShoe();
       }
       function paintShoe() {
@@ -154,9 +161,20 @@
       });
       RV.$$("[data-unit]", el).forEach(function (b) {
         b.addEventListener("click", function () {
+          if (b.dataset.unit === unit) return;
+          // Convert whatever is currently typed (saved or not) to the new unit.
+          var from = unit, typed = {};
+          FIELDS.forEach(function (f) { var v = RV.$("#me-" + f.k, form).value.trim(); typed[f.k] = v; });
           unit = b.dataset.unit; RV.setting("measureUnit", unit);
           RV.$$("[data-unit]", el).forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
-          paintForm(); paintChart(lastHit);
+          paintForm();
+          FIELDS.forEach(function (f) {
+            var inp = RV.$("#me-" + f.k, form), raw = typed[f.k], n = RV.num(raw);
+            if (!raw) { inp.value = ""; return; }
+            if (!isFinite(n)) { inp.value = raw; return; }
+            inp.value = RV.round(from === "cm" ? n / IN : n * IN, 1);
+          });
+          paintChart(lastHit); paintRec();
         });
       });
 
